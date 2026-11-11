@@ -2,7 +2,7 @@
 @media(prefers-color-scheme:dark){:root{--bg:#161c21;--card:#1e262c;--ink:#e6ecef;--mut:#92a1ab;--rule:#34414a;--acc:#8fbbd6;--c0:#7fb2d6;--c1:#7cc09b;--c2:#dcad55;--c3:#b99ad4;--bar:rgba(22,28,33,.82);--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}}
 *{box-sizing:border-box}
 html{-webkit-text-size-adjust:100%}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;padding-bottom:calc(72px + env(safe-area-inset-bottom))}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overscroll-behavior-y:contain}
 
 /* ---------- barra superior tipo app ---------- */
 .appbar{position:sticky;top:0;z-index:20;background:var(--bar);-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);border-bottom:1px solid var(--rule);padding:calc(6px + env(safe-area-inset-top)) 0 6px}
@@ -17,17 +17,18 @@ h1{font-size:1.28rem;line-height:1.25}
 .chips button{flex:0 0 auto;scroll-snap-align:start;font:inherit;font-size:.86rem;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:999px;padding:6px 12px;min-height:34px;cursor:pointer;white-space:nowrap}
 .chips button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--bg);font-weight:600}
 
-/* vistas: pestañas abajo en móvil, segmentado bajo la cabecera en escritorio */
-.tabs{display:flex;gap:4px;max-width:980px;margin:0 auto;padding:9px 14px 0}
-.tabs button{flex:1;font:inherit;font-size:.88rem;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:9px;padding:8px 6px;cursor:pointer}
-.tabs button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--bg);font-weight:600}
-@media(max-width:759px){
- .tabs{position:fixed;left:0;right:0;bottom:0;z-index:30;margin:0;gap:6px;max-width:none;padding:6px 10px calc(6px + env(safe-area-inset-bottom));background:var(--bar);-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);border-top:1px solid var(--rule)}
- .tabs button{min-height:46px;border-radius:12px;font-size:.9rem}
+/* vistas: barra de pestañas pegada abajo. Sticky y no fixed, para que no
+   baile cuando el móvil esconde o enseña la barra de direcciones. */
+.tabs{position:sticky;bottom:0;z-index:30;display:flex;gap:2px;margin:0;padding:4px 6px calc(4px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--rule)}
+.tabs button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;font:inherit;font-size:.68rem;line-height:1.15;letter-spacing:.02em;color:var(--mut);background:none;border:0;border-radius:10px;padding:6px 4px;min-height:48px;cursor:pointer}
+.tabs button .ti{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tabs button[aria-pressed=true]{color:var(--acc);font-weight:600;background:color-mix(in srgb,var(--acc) 11%,transparent)}
+@media(min-width:760px){
+ .tabs{max-width:360px;margin:0 auto 14px;border:1px solid var(--rule);border-radius:16px;padding:5px;box-shadow:0 8px 26px rgba(20,30,38,.14)}
+ .tabs button{min-height:44px;font-size:.72rem}
 }
-@media(min-width:760px){body{padding-bottom:0};.tabs{padding-bottom:0}}
 
-main{max-width:980px;margin:0 auto;padding:12px 14px 30px}
+main{max-width:980px;margin:0 auto;padding:12px 14px 30px;min-height:calc(100dvh - 320px)}
 h2{font-size:1.06rem;margin:20px 0 8px}
 @media(min-width:760px){h2{font-size:1.2rem;margin:26px 0 10px}}
 
@@ -43,6 +44,12 @@ tbody tr:last-child td{border-bottom:0}
 tr.now td{background:color-mix(in srgb,var(--acc) 12%,transparent)}
 tr.dh td{background:var(--bg);font-weight:600;text-align:left}
 .grp{text-align:center;color:var(--mut);font-weight:400}
+
+/* primera columna (hora + dibujo del tiempo) fija al hacer scroll horizontal */
+.wrap th:first-child,.wrap td:first-child{position:sticky;left:0;z-index:2;background:var(--card);box-shadow:1px 0 0 var(--rule)}
+.wrap thead th:first-child{z-index:3}
+.wrap tr.dh td:first-child{position:static;background:var(--bg);box-shadow:none}
+tr.now td:first-child{background:color-mix(in srgb,var(--acc) 12%,var(--card))}
 
 /* tabla horaria compacta (móvil): dos líneas por celda */
 table.compact th{font-size:.76rem;padding:8px 8px;text-align:center;white-space:nowrap}

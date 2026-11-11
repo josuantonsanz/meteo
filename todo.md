@@ -11,8 +11,12 @@
       Android, así que vale como icono maskable).
 - [x] `<head>`: manifiesto, `theme-color` claro/oscuro, metadatos de Apple,
       `viewport-fit=cover` y `color-scheme`.
-- [x] Cabecera fija con lugar y fichas de sitio con scroll horizontal; vistas
-      como pestañas abajo en móvil (con *safe area*) y segmentado en escritorio.
+- [x] Cabecera fija con lugar y fichas de sitio con scroll horizontal; barra de
+      pestañas inferior con iconos (Día / Semana / Detalle), pegada abajo con
+      `position:sticky` en vez de `fixed` para que no baile cuando el móvil
+      esconde la barra de direcciones.
+- [x] Primera columna de las tablas (hora + dibujo del tiempo) fija al hacer
+      scroll horizontal.
 - [x] Tabla horaria y resumen en tarjetas compactas en móvil; vista Semana con
       una tarjeta por día; Detalle con tabla compacta de seis columnas.
 - [x] Gráficas: en pantallas estrechas se generan con un lienzo propio (392 px)

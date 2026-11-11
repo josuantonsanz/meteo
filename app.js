@@ -6,6 +6,10 @@ const DEFAULTS=[
  {n:"Daimiel",lat:39.0687,lon:-3.6120,mn:"Daimiel"}];
 const SRC=[{id:"ecmwf_ifs025",n:"ECMWF",c:"--c0"},{id:"icon_seamless",n:"ICON",c:"--c1"},{id:"aemet",n:"AEMET",c:"--c2"},{id:"wn",n:"WeatherNext 2",c:"--c3"}];
 const VIEWS=[["dia","Día por horas","Día"],["sem","Semana","Semana"],["det","Detalle","Detalle"]];
+const VI={
+ dia:"<svg class=\"ti\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><circle cx=\"12\" cy=\"12\" r=\"4.2\"/><path d=\"M12 2.6v2.1M12 19.3v2.1M2.6 12h2.1M19.3 12h2.1M5.4 5.4l1.5 1.5M17.1 17.1l1.5 1.5M5.4 18.6l1.5-1.5M17.1 6.9l1.5-1.5\"/></svg>",
+ sem:"<svg class=\"ti\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"3.6\" y=\"5.2\" width=\"16.8\" height=\"15\" rx=\"2.6\"/><path d=\"M8.2 2.8v4M15.8 2.8v4M3.6 10.2h16.8\"/></svg>",
+ det:"<svg class=\"ti\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M4 7.5h16M4 12h16M4 16.5h16\"/><circle cx=\"9\" cy=\"7.5\" r=\"1.7\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"15\" cy=\"12\" r=\"1.7\" fill=\"currentColor\" stroke=\"none\"/><circle cx=\"10.5\" cy=\"16.5\" r=\"1.7\" fill=\"currentColor\" stroke=\"none\"/></svg>"};
 const MODELS=[["ecmwf_ifs025","ECMWF"],["icon_seamless","ICON"],["meteofrance_seamless","Météo-France"],["best_match","Mejor modelo"]];
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 let CITIES=ls.get("t.places",null)||JSON.parse(JSON.stringify(DEFAULTS));
@@ -213,7 +217,7 @@ async function find(){
 async function render(){
  renderPlaces();
  $("cities").innerHTML=CITIES.map((c,i)=>`<button data-c="${i}" aria-pressed="${i===st.city}">${c.n}</button>`).join("");
- $("views").innerHTML=VIEWS.map(([v,n,s])=>`<button data-v="${v}" aria-pressed="${v===st.view}">${narrow()?s:n}</button>`).join("");
+ $("views").innerHTML=VIEWS.map(([v,n,s])=>`<button data-v="${v}" aria-pressed="${v===st.view}" aria-label="${n}">${VI[v]}<span>${s}</span></button>`).join("");
  const c=CITIES[st.city],out=$("out");out.innerHTML='<p class="msg">Cargando previsión…</p>';
  try{
   const D=await load(c);if(c!==CITIES[st.city])return;
