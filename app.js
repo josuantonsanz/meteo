@@ -1,68 +1,10 @@
-<!doctype html>
-<html lang="es">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Previsión meteorológica</title>
-<style>
-:root{--bg:#f3f5f6;--card:#fff;--ink:#1d2a33;--mut:#66747e;--rule:#d8dfe3;--acc:#2c5a78;--c0:#2c5a78;--c1:#3d7a5a;--c2:#b07d1e;--c3:#7a5a96;color-scheme:light}
-@media(prefers-color-scheme:dark){:root{--bg:#161c21;--card:#1e262c;--ink:#e6ecef;--mut:#92a1ab;--rule:#34414a;--acc:#8fbbd6;--c0:#7fb2d6;--c1:#7cc09b;--c2:#dcad55;--c3:#b99ad4;color-scheme:dark}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
-main{max-width:980px;margin:0 auto;padding:28px 18px 48px}
-h1,h2{font-family:Charter,"Iowan Old Style",Georgia,serif;font-weight:600;margin:0}
-h1{font-size:1.8rem}h2{font-size:1.2rem;margin:26px 0 10px}
-.sub{color:var(--mut);margin:2px 0 18px}
-nav{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
-nav button,select{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:6px 12px;cursor:pointer}
-nav button[aria-pressed=true]{background:var(--acc);border-color:var(--acc);color:var(--bg)}
-nav.views{border-bottom:1px solid var(--rule);padding-bottom:12px;margin-bottom:6px}
-button:focus-visible,select:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.wrap{overflow-x:auto;background:var(--card);border:1px solid var(--rule);border-radius:8px}
-table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums;white-space:nowrap}
-th,td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--rule)}
-th:first-child,td:first-child{text-align:left}
-thead th{font-weight:600;position:sticky;top:0;background:var(--card)}
-tbody tr:last-child td{border-bottom:0}
-tr.now td{background:color-mix(in srgb,var(--acc) 12%,transparent)}
-tr.dh td{background:var(--bg);font-weight:600;text-align:left}
-.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:6px}
-.grp{text-align:center;color:var(--mut);font-weight:400}
-.mut{color:var(--mut)}
-.msg{padding:14px;color:var(--mut)}
-.err{color:var(--c2)}
-svg{width:100%;height:auto;display:block}
-.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle;display:inline-block}.leg{display:flex;flex-wrap:wrap;gap:4px 16px;margin:8px 2px;color:var(--mut);font-size:.9rem}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:14px 0 4px}
-footer{margin-top:34px;color:var(--mut);font-size:.88rem}
-details{margin-top:26px}summary{cursor:pointer}details li{margin:6px 0}details button{font:inherit;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:6px;padding:3px 10px;cursor:pointer;margin-left:6px}footer input,details input{font:inherit;padding:5px 8px;border:1px solid var(--rule);border-radius:6px;background:var(--card);color:var(--ink);width:min(320px,100%)}
-</style>
-</head>
-<body>
-<main>
-<h1>Previsión meteorológica</h1>
-<p class="sub">Comparación entre AEMET, ECMWF, ICON y WeatherNext 2.</p>
-<nav id="cities" aria-label="Localidad"></nav>
-<nav id="views" class="views" aria-label="Vista"></nav>
-<div id="out"></div>
-<details id="plc"><summary>Lugares</summary>
-<div id="plist"></div>
-<p><input id="q" type="search" placeholder="Buscar un lugar (pueblo, ciudad, colegio…)" aria-label="Buscar un lugar"> <button id="find">Buscar</button> <button id="reset">Restaurar lugares iniciales</button></p>
-<div id="pres"></div>
-</details>
-<footer>
-<p id="notes"></p>
-<p>Datos de AEMET y de Open-Meteo (CC BY 4.0). Búsqueda de lugares: OpenStreetMap. La probabilidad de lluvia de WeatherNext 2 es la proporción de sus escenarios con lluvia; los modelos que no la ofrecen aparecen con un guion.</p>
-</footer>
-</main>
-<script>
 const KEY="eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJqb3N1YW50b25zYW56QGdtYWlsLmNvbSIsImp0aSI6IjQ1NTBkNDZmLTU1OGQtNDJhNi05NDE2LWIxNmY1NmE3MzZmNyIsImV4cCI6MTgwMzAzMjAxOSwiaXNzIjoiQUVNRVQiLCJpYXQiOjE3OTQzOTIwMTksInVzZXJJZCI6IjQ1NTBkNDZmLTU1OGQtNDJhNi05NDE2LWIxNmY1NmE3MzZmNyIsInJvbGUiOiIifQ.Bv9y6j-0PmfMMpQvubiJ211MMH0CZuamfGL3VoazCZM";
 const DEFAULTS=[
  {n:"Villanañe",lat:42.8060,lon:-3.1370,mn:"Valdegovía"},
  {n:"Colegio San Gabriel, Zuera",lat:41.8667,lon:-0.7833,mn:"Zuera"},
  {n:"Vitoria-Gasteiz",lat:42.8467,lon:-2.6716,mn:"Vitoria"},
  {n:"Daimiel",lat:39.0687,lon:-3.6120,mn:"Daimiel"}];
-const SRC=[{id:"ecmwf_ifs025",n:"ECMWF",c:"--c0"},{id:"icon_seamless",n:"ICON",c:"--c1"},{id:"aemet",n:"AEMET",c:"--c2"},{id:"wn2",n:"WeatherNext 2",c:"--c3"}];
+const SRC=[{id:"ecmwf_ifs025",n:"ECMWF",c:"--c0"},{id:"icon_seamless",n:"ICON",c:"--c1"},{id:"aemet",n:"AEMET",c:"--c2"},{id:"wn",n:"WeatherNext 2",c:"--c3"}];
 const VIEWS=[["dia","Día por horas"],["sem","Semana"],["det","Detalle"]];
 const MODELS=[["ecmwf_ifs025","ECMWF"],["icon_seamless","ICON"],["meteofrance_seamless","Météo-France"],["best_match","Mejor modelo"]];
 const ls={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
@@ -170,6 +112,44 @@ function chart(D,d,act){
  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperatura por horas">${g}</svg><div class="leg">${act.map(s=>`<span><span class="dot" style="background:var(${s.c})"></span>${s.n}${s.id==="wn"?" (banda: 80 % de los escenarios)":""}</span>`).join("")}</div>`;
 }
 
+const avg=a=>{a=a.filter(v=>v!=null);return a.length?a.reduce((x,y)=>x+y,0)/a.length:null};
+const nstep=v=>{const c=[.1,.2,.5,1,2,5,10,20,50];return c.find(x=>x>=v)||100};
+const mpath=(vals,px,py)=>{let p="",on=false;
+ vals.forEach((v,k)=>{if(v==null){on=false;return}p+=(on?"L":"M")+px(k).toFixed(1)+","+py(v).toFixed(1);on=true});return p};
+const mmTxt=v=>v<10?(Math.round(v*10)%10?v.toFixed(1):String(Math.round(v))):String(Math.round(v));
+
+function rainChart(D,d,act){
+ const ix=d.ix;if(ix.length<2)return"";
+ const ppS=act.filter(s=>(gs(D,s.id).pp||[]).some(v=>v!=null));
+ const mmS=act.filter(s=>(gs(D,s.id).p||[]).some(v=>v!=null));
+ if(!ppS.length&&!mmS.length)return"";
+ const ppM=ix.map(i=>avg(ppS.map(s=>(gs(D,s.id).pp||[])[i])));
+ const mmM=ix.map(i=>avg(mmS.map(s=>gs(D,s.id).p[i])));
+ const mx=Math.max(0,...mmM.filter(v=>v!=null),...mmS.flatMap(s=>gs(D,s.id).p).filter(v=>v!=null));
+ const step=nstep(mx>0?mx/3:1),top=Math.max(step,Math.ceil((mx*1.05||step)/step)*step);
+ const W=720,L=42,Rr=12,PT=22,PH=88,MB=PT+PH+38,PB0=MB+10,PBH=92,H=PB0+PBH+24;
+ const x=k=>L+(W-L-Rr)*k/(ix.length-1),span=(W-L-Rr)/(ix.length-1);
+ const yP=v=>PT+PH*(1-v/100),yM=v=>PB0+PBH*(1-v/top);
+ let g="";
+ [0,25,50,75,100].forEach(v=>{g+=`<line x1="${L}" x2="${W-Rr}" y1="${yP(v)}" y2="${yP(v)}" style="stroke:var(--rule)"/>`});
+ [0,50,100].forEach(v=>{g+=`<text x="${L-6}" y="${yP(v)+4}" text-anchor="end" font-size="11" style="fill:var(--mut)">${v}</text>`});
+ for(let v=0;v<=top+1e-9;v+=step){g+=`<line x1="${L}" x2="${W-Rr}" y1="${yM(v)}" y2="${yM(v)}" style="stroke:var(--rule)"/><text x="${L-6}" y="${yM(v)+4}" text-anchor="end" font-size="11" style="fill:var(--mut)">${mmTxt(v)}</text>`}
+ ix.forEach((i,k)=>{if(k%3===0){g+=`<line x1="${x(k).toFixed(1)}" x2="${x(k).toFixed(1)}" y1="${PT}" y2="${PB0+PBH}" style="stroke:var(--rule);opacity:.6"/>`+`<text x="${x(k)}" y="${H-6}" text-anchor="middle" font-size="11" style="fill:var(--mut)">${D.times[i].slice(11,13)}</text>`}});
+ g+=`<text x="${L}" y="${PT-8}" font-size="11" style="fill:var(--mut)">Probabilidad de lluvia, %</text>`;
+ g+=`<text x="${L}" y="${MB}" font-size="11" style="fill:var(--mut)">Agua prevista, mm</text>`;
+ const bw=Math.max(3,Math.min(16,span*.55));
+ mmM.forEach((v,k)=>{if(v==null||v<=0)return;const hh=Math.max(2,PB0+PBH-yM(v));
+  g+=`<rect x="${(x(k)-bw/2).toFixed(1)}" y="${(PB0+PBH-hh).toFixed(1)}" width="${bw.toFixed(2)}" height="${hh.toFixed(1)}" rx="1.5" style="fill:var(--acc);opacity:.45"/>`});
+ mmS.forEach(s=>{const p=mpath(ix.map(i=>gs(D,s.id).p[i]),x,yM);
+  if(p)g+=`<path d="${p}" fill="none" stroke-width="1.2" stroke-linejoin="round" style="stroke:var(${s.c});opacity:.8"/>`});
+ ppS.forEach(s=>{const p=mpath(ix.map(i=>(gs(D,s.id).pp||[])[i]),x,yP);
+  if(p)g+=`<path d="${p}" fill="none" stroke-width="1.2" stroke-linejoin="round" style="stroke:var(${s.c});opacity:.8"/>`});
+ const pm=mpath(ppM,x,yP);
+ if(pm)g+=`<path d="${pm}" fill="none" stroke-width="2.2" stroke-linejoin="round" style="stroke:var(--ink)"/>`;
+ const lg=`<span><span class="dot" style="background:var(--ink)"></span>Media: probabilidad</span><span><span class="dot" style="background:var(--acc);opacity:.6"></span>Media: agua (barras)</span>`+act.map(s=>`<span><span class="dot" style="background:var(${s.c})"></span>${s.n}</span>`).join("");
+ return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Probabilidad y cantidad de lluvia por horas">${g}</svg><div class="leg">${lg}</div>`;
+}
+
 function vDia(D){
  const ds=days(D),act=active(D);if(st.day>=ds.length)st.day=0;const d=ds[st.day];
  const mx=range(act.map(s=>d[s.id]?.mx)),mn=range(act.map(s=>d[s.id]?.mn));
@@ -178,7 +158,7 @@ function vDia(D){
  const rs=`<div class="wrap"><table><thead><tr><th>Fuente</th><th>Cielo</th><th>Máxima</th><th>Mínima</th><th>Lluvia</th><th>Prob. de lluvia (máx.)</th></tr></thead><tbody>${act.map(s=>{const o=d[s.id];return`<tr><td><span class="dot" style="background:var(${s.c})"></span>${s.n}</td><td>${ic(o?.k)}</td><td>${T(o?.mx)}</td><td>${T(o?.mn)}</td><td>${o?.r!=null?R(o.r)+" mm":"–"}</td><td>${o?.pm!=null?Math.round(o.pm)+" %":o?.pr!=null?o.pr+" %":"–"}</td></tr>`}).join("")}</tbody></table></div>`;
  const nowK=new Date().toLocaleString("sv-SE",{timeZone:"Europe/Madrid"}).slice(0,13).replace(" ","T");
  const hrs=`<div class="wrap"><table><thead><tr><th rowspan="2">Hora</th><th rowspan="2">Cielo</th><th class="grp" colspan="${act.length}">Temperatura</th><th class="grp" colspan="${act.length}">Lluvia (mm · prob.)</th></tr><tr>${th(act)}${th(act)}</tr></thead><tbody>${d.ix.map(i=>`<tr${D.times[i].slice(0,13)===nowK?' class="now"':""}><td>${D.times[i].slice(11,16)}</td><td>${ic(sky(D,i))}</td>${act.map(s=>`<td>${T(gs(D,s.id).t[i])}</td>`).join("")}${act.map(s=>{const S=gs(D,s.id),pp=S.pp?.[i];return`<td>${R(S.p[i])}${pp!=null?' <span class="mut">· '+Math.round(pp)+' %</span>':""}</td>`}).join("")}</tr>`).join("")}</tbody></table></div>`;
- return sel+`<h2>Resumen</h2>${sum}${rs}<h2>Temperatura hora a hora</h2>${chart(D,d,act)}<h2>Tabla horaria</h2>${hrs}`;
+ return sel+`<h2>Resumen</h2>${sum}${rs}<h2>Temperatura hora a hora</h2>${chart(D,d,act)}<h2>Tabla horaria</h2>${hrs}<h2>Lluvia hora a hora</h2>${rainChart(D,d,act)}`;
 }
 
 function vSem(D){
@@ -236,6 +216,3 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
 });
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")find()});
 render();
-</script>
-</body>
-</html>
