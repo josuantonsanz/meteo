@@ -7,13 +7,6 @@ body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-app
 /* ---------- barra superior tipo app ---------- */
 .appbar{position:sticky;top:0;z-index:20;background:var(--bar);-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);border-bottom:1px solid var(--rule);padding:calc(6px + env(safe-area-inset-top)) 0 6px}
 .appbar .in{max-width:980px;margin:0 auto;padding:0 14px}
-.appbar .top{display:flex;align-items:center;gap:10px}
-.appbar .top h1{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.iconbtn{flex:0 0 auto;margin-left:auto;width:40px;height:40px;display:grid;place-items:center;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:10px;cursor:pointer}
-.iconbtn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.iconbtn:active{background:color-mix(in srgb,var(--acc) 14%,var(--card))}
-.iconbtn.girando svg{animation:giro .9s linear infinite}
-@keyframes giro{to{transform:rotate(360deg)}}
 h1,h2{font-family:Charter,"Iowan Old Style",Georgia,serif;font-weight:600;margin:0}
 h1{font-size:1.28rem;line-height:1.25}
 .appbar .sub{color:var(--mut);font-size:.78rem;margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

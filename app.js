@@ -214,12 +214,6 @@ async function find(){
   $("pres").innerHTML=found.length?`<ul>${found.map((r,i)=>`<li>${r.display_name}<button data-add="${i}">Añadir</button></li>`).join("")}</ul>`:'<p class="msg">Sin resultados.</p>'}
  catch(e){$("pres").innerHTML='<p class="msg err">La búsqueda de lugares no está disponible ahora.</p>'}
 }
-function refrescar(){
- for(const k in detCache)delete detCache[k];
- try{Object.keys(localStorage).filter(k=>k.indexOf("t.cache2.")===0).forEach(k=>localStorage.removeItem(k))}catch(e){}
- const b=$("reload");if(b){b.classList.add("girando");setTimeout(()=>b.classList.remove("girando"),1600)}
- render();window.scrollTo(0,0);
-}
 async function render(){
  renderPlaces();
  $("cities").innerHTML=CITIES.map((c,i)=>`<button data-c="${i}" aria-pressed="${i===st.city}">${c.n}</button>`).join("");
@@ -243,7 +237,6 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
   st.city=CITIES.length-1;st.day=0;savePlaces();$("pres").innerHTML="";render()}
  else if(b.dataset.rm!=null){if(CITIES.length<2)return;CITIES.splice(+b.dataset.rm,1);st.city=Math.min(st.city,CITIES.length-1);st.day=0;savePlaces();render()}
  else if(b.id==="find")find();
- else if(b.id==="reload")refrescar();
  else if(b.id==="reset"){CITIES=JSON.parse(JSON.stringify(DEFAULTS));st.city=0;st.day=0;savePlaces();render()}
 });
 $("q").addEventListener("keydown",e=>{if(e.key==="Enter")find()});
