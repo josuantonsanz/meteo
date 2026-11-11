@@ -32,8 +32,23 @@ instalar como app en el móvil.
 ## Datos y caché
 
 - Open-Meteo (ECMWF, ICON, ensemble WeatherNext 2), CC BY 4.0
-- AEMET OpenData (API key en `app.js`; si caduca, hay que renovarla)
+- AEMET OpenData (API key en `app.js`, constante `KEY`)
 - Nominatim (OpenStreetMap) para buscar lugares
+
+### Detalles de AEMET (importante si se toca)
+
+- La clave va **en la URL** (`?api_key=…`), nunca en una cabecera `api_key`.
+  `opendata.aemet.es` manda `Access-Control-Allow-Origin: *` en el `GET`, pero
+  **no** responde al preflight `OPTIONS`; con la clave en cabecera el navegador
+  hace preflight y bloquea la petición (`TypeError: Failed to fetch`).
+- Todo el JSON viene en **ISO-8859-15**: se lee con `TextDecoder("iso-8859-15")`
+  (`L9` / `jaemet()` en `app.js`). Con `response.json()` los nombres salen como
+  «Valdegov�a» y la búsqueda de municipios falla.
+- Límites: horaria sólo **3 días** (desde la hora actual) y diaria **7 días**.
+  No da probabilidad por horas (sólo la diaria, en % máximo) ni mm diarios: los
+  mm del día se suman de la horaria cuando el día está completo (≥ 20 horas).
+- Si la clave caduca, la API responde 401 y el pie avisa de que hay que
+  renovarla. Caducidad actual: feb. 2027 (`exp` del JWT).
 
 - Datos de previsión: `localStorage`, clave `t.cache2.<lugar>`, **30 minutos**
   (`Date.now()-ca.t<18e5`). Pasado ese tiempo se vuelven a pedir; no hay

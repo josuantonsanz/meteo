@@ -19,7 +19,11 @@ const $=id=>document.getElementById(id);
 const narrowMq=matchMedia("(max-width:759px)");
 const narrow=()=>narrowMq.matches;
 const sn=s=>s.n.replace("WeatherNext 2","WN2").replace("Météo-France","M-France");
-const j=async(u,o)=>{const c=new AbortController(),t=setTimeout(()=>c.abort(),15000);try{const r=await fetch(u,{...o,signal:c.signal});if(!r.ok)throw new Error("HTTP "+r.status);return await r.json()}finally{clearTimeout(t)}};
+const j=async(u,o={})=>{const{enc,...f}=o;const c=new AbortController(),t=setTimeout(()=>c.abort(),15000);try{const r=await fetch(u,{...f,signal:c.signal});if(!r.ok)throw new Error("HTTP "+r.status);if(enc)return JSON.parse(new TextDecoder(enc).decode(await r.arrayBuffer()));return await r.json()}finally{clearTimeout(t)}};
+// AEMET responde en ISO-8859-15 (leído como UTF-8 sale «Valdegovía» mal) y sólo manda
+// las cabeceras CORS en el GET, no en el preflight: por eso la clave va en la URL.
+const AEMET="https://opendata.aemet.es/opendata/api/",L9={enc:"iso-8859-15"};
+const jaemet=u=>j(u+(u.includes("?")?"&":"?")+"api_key="+KEY,L9);
 const q=(a,p)=>{a=a.filter(v=>v!=null).sort((x,y)=>x-y);if(!a.length)return null;const i=(a.length-1)*p,l=Math.floor(i);return a[l]+(a[Math.ceil(i)]-a[l])*(i-l)};
 const T=v=>v==null?"–":Math.round(v)+"°",R=v=>v==null?"–":(v<0.05?"0":v.toFixed(1)),N=(v,u="")=>v==null?"–":Math.round(v)+u;
 const dl=d=>new Date(d+"T12:00").toLocaleDateString("es-ES",{weekday:"short",day:"numeric",month:"short"});
@@ -34,8 +38,7 @@ async function aemetMun(c,g){
  c.ae=f[0];c.aen=f[3];
 }
 async function aemet(c){
- const key=KEY;
- const g=async p=>{const r=await j("https://opendata.aemet.es/opendata/api/"+p,{headers:{api_key:key}});if(!r.datos)throw new Error("AEMET: "+(r.descripcion||"respuesta inesperada"));return j(r.datos)};
+ const g=async p=>{const r=await jaemet(AEMET+p);if(!r.datos)throw new Error("AEMET: "+(r.descripcion||"respuesta inesperada"));return j(r.datos,L9)};
  try{
   if(!c.ae){await aemetMun(c,g);ls.set("t.places",CITIES)}
   const [h,d]=await Promise.all([g("prediccion/especifica/municipio/horaria/"+c.ae),g("prediccion/especifica/municipio/diaria/"+c.ae)]);
@@ -43,10 +46,12 @@ async function aemet(c){
   for(const x of h[0].prediccion.dia){const f=x.fecha.slice(0,10),k=p=>f+"T"+String(p).padStart(2,"0")+":00";
    (x.temperatura||[]).forEach(o=>(hm[k(o.periodo)]=hm[k(o.periodo)]||{}).t=+o.value);
    (x.precipitacion||[]).forEach(o=>(hm[k(o.periodo)]=hm[k(o.periodo)]||{}).p=+o.value)}
-  for(const x of d[0].prediccion.dia){const pr=(x.probPrecipitacion||[]).map(o=>+o.value);
-   ad[x.fecha.slice(0,10)]={mx:x.temperatura.maxima,mn:x.temperatura.minima,pr:pr.length?Math.max(...pr):null,sk:((x.estadoCielo||[]).find(o=>o.periodo==="00-24")||(x.estadoCielo||[]).find(o=>o.descripcion)||{}).descripcion||""}}
+  const hc={};for(const [k,v] of Object.entries(hm)){if(v.p==null)continue;const f=k.slice(0,10),c2=hc[f]=hc[f]||{n:0,mm:0};c2.n++;c2.mm+=v.p}
+  for(const x of d[0].prediccion.dia){const f=x.fecha.slice(0,10),pr=(x.probPrecipitacion||[]).map(o=>+o.value),e=x.estadoCielo||[];
+   const sky=p=>(e.find(o=>o.periodo===p&&o.descripcion)||{}).descripcion;
+   ad[f]={mx:x.temperatura.maxima,mn:x.temperatura.minima,pr:pr.length?Math.max(...pr):null,r:hc[f]&&hc[f].n>=20?Math.round(hc[f].mm*10)/10:null,sk:sky("00-24")||sky("12-24")||sky("00-12")||(e.find(o=>o.descripcion)||{}).descripcion||""}}
   return{hm,ad};
- }catch(e){if(e instanceof TypeError)throw new Error("AEMET: el navegador no ha podido consultarla (clave incorrecta o bloqueo CORS).");throw e}
+ }catch(e){if(e.message==="HTTP 401")throw new Error("AEMET: la clave ha caducado (hay que renovarla en app.js).");if(e instanceof TypeError)throw new Error("AEMET: no se ha podido consultar (¿sin conexión?)");throw e}
 }
 
 async function load(c){
@@ -79,7 +84,7 @@ function days(D){
   for(const s of SRC){const S=D.s[s.id];if(!S)continue;
    const t=ix.map(i=>S.t[i]).filter(v=>v!=null),p=ix.map(i=>S.p[i]).filter(v=>v!=null);
    o[s.id]=t.length?{mx:Math.max(...t),mn:Math.min(...t),r:p.length?p.reduce((a,b)=>a+b,0):null,h:t.indexOf(Math.max(...t)),pm:(pp=>pp.length?Math.max(...pp):null)(ix.map(i=>(S.pp||[])[i]).filter(v=>v!=null)),k:dk(D,S.c,ix)}:null}
-  const a=D.ad&&D.ad[d];if(a)o.aemet={mx:a.mx,mn:a.mn,pr:a.pr,r:null,k:sk(a.sk)};
+  const a=D.ad&&D.ad[d];if(a)o.aemet={mx:a.mx,mn:a.mn,pr:a.pr,r:a.r??null,k:sk(a.sk)};
   return o});
 }
 const KN={sun:"Despejado",part:"Intervalos nubosos",cloud:"Nuboso",fog:"Niebla",rain:"Lluvia",snow:"Nieve",storm:"Tormenta"};
@@ -134,6 +139,7 @@ function wiringTips(){
 document.addEventListener("pointerdown",e=>{if(!e.target.closest(".chartbox"))document.querySelectorAll(".chartbox").forEach(b=>ocultarTip(b))});
 
 function chart(D,d,act){
+ act=act.filter(s=>d.ix.some(i=>gs(D,s.id).t[i]!=null));
  const W=narrow()?392:720,H=narrow()?210:230,L=narrow()?30:36,Rr=10,Tp=10,B=24,ix=d.ix,vals=[];
  act.forEach(s=>{const S=gs(D,s.id);ix.forEach(i=>{vals.push(S.t[i]);if(s.id==="wn"){vals.push(S.lo[i],S.hi[i])}})});
  let [lo,hi]=range(vals);if(lo==null)return"";
@@ -165,8 +171,8 @@ const mmTxt=v=>v<10?(Math.round(v*10)%10?v.toFixed(1):String(Math.round(v))):Str
 
 function rainChart(D,d,act){
  const ix=d.ix;if(ix.length<2)return"";
- const ppS=act.filter(s=>(gs(D,s.id).pp||[]).some(v=>v!=null));
- const mmS=act.filter(s=>(gs(D,s.id).p||[]).some(v=>v!=null));
+ const ppS=act.filter(s=>ix.some(i=>(gs(D,s.id).pp||[])[i]!=null));
+ const mmS=act.filter(s=>ix.some(i=>(gs(D,s.id).p||[])[i]!=null));
  if(!ppS.length&&!mmS.length)return"";
  const ppM=ix.map(i=>avg(ppS.map(s=>(gs(D,s.id).pp||[])[i])));
  const mmM=ix.map(i=>avg(mmS.map(s=>gs(D,s.id).p[i])));
@@ -193,7 +199,7 @@ function rainChart(D,d,act){
  const tips=ix.map((i,k)=>({h:D.times[i].slice(11,16),rows:[{c:"--ink",n:"Media",v:`${ppM[k]!=null?Math.round(ppM[k])+" %":"–"} · ${mmM[k]!=null?R(mmM[k])+" mm":"–"}`}]
   .concat([...new Set([...ppS,...mmS])].map(s=>{const pp=(gs(D,s.id).pp||[])[i],p=gs(D,s.id).p[i];
    return {c:s.c,n:sn(s),v:`${pp!=null?Math.round(pp)+" %":"–"} · ${p!=null?R(p)+" mm":"–"}`}}))}));
- const lg=`<span><span class="dot" style="background:var(--ink)"></span>Media: probabilidad</span><span><span class="dot" style="background:var(--acc);opacity:.6"></span>Media: agua (barras)</span>`+ppS.map(s=>`<span><span class="dot" style="background:var(${s.c});opacity:.55"></span>${s.n}</span>`).join("");
+ const lg=`<span><span class="dot" style="background:var(--ink)"></span>Media: probabilidad</span><span><span class="dot" style="background:var(--acc);opacity:.6"></span>Media: agua (barras)</span>`+[...new Set([...ppS,...mmS])].map(s=>`<span><span class="dot" style="background:var(${s.c});opacity:.55"></span>${s.n}${ppS.includes(s)?"":" (agua)"}</span>`).join("");
  return chartBox(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Probabilidad y cantidad de lluvia por horas">${g}<line class="guide" x1="0" x2="0" y1="${PT}" y2="${PB0+PBH}" style="stroke:var(--acc);stroke-width:1.5;stroke-dasharray:4 3;visibility:hidden"/></svg>`,tips,{W,xs:ix.map((_,k)=>x(k))})+`<div class="leg">${lg}</div>`;
 }
 
@@ -207,10 +213,11 @@ function vDia(D){
      return`<div class="srcrow"><span class="nm"><span class="dot" style="background:var(${s.c})"></span>${s.n}</span><span class="sky">${ic(o?.k)}</span><span class="vals"><b>${T(o?.mx)}</b> <span class="mut">/ ${T(o?.mn)}</span></span><span class="vals mut">${o?.r!=null?R(o.r)+" mm":"–"} · ${pr}</span></div>`}).join("")}</div>`
   :`<div class="wrap"><table><thead><tr><th>Fuente</th><th>Cielo</th><th>Máxima</th><th>Mínima</th><th>Lluvia</th><th>Prob. de lluvia (máx.)</th></tr></thead><tbody>${act.map(s=>{const o=d[s.id];return`<tr><td><span class="dot" style="background:var(${s.c})"></span>${s.n}</td><td>${ic(o?.k)}</td><td>${T(o?.mx)}</td><td>${T(o?.mn)}</td><td>${o?.r!=null?R(o.r)+" mm":"–"}</td><td>${o?.pm!=null?Math.round(o.pm)+" %":o?.pr!=null?o.pr+" %":"–"}</td></tr>`}).join("")}</tbody></table></div>`;
  const nowK=new Date().toLocaleString("sv-SE",{timeZone:"Europe/Madrid"}).slice(0,13).replace(" ","T");
+ const actH=act.filter(s=>d.ix.some(i=>gs(D,s.id).t[i]!=null));
  const hrs=narrow()
-  ?`<p class="mut tiny">Cada celda: temperatura y, debajo, lluvia (mm · probabilidad).</p><div class="wrap"><table class="compact"><thead><tr><th>Hora</th>${act.map(s=>`<th><span class="dot" style="background:var(${s.c})"></span>${sn(s)}</th>`).join("")}</tr></thead><tbody>${d.ix.map(i=>`<tr${D.times[i].slice(0,13)===nowK?' class="now"':""}><td>${D.times[i].slice(11,16)} ${ic(sky(D,i))}</td>${act.map(s=>{const S=gs(D,s.id),pp=S.pp?.[i];return`<td><b>${T(S.t[i])}</b><span class="rain2">${R(S.p[i])}${pp!=null?" · "+Math.round(pp)+" %":""}</span></td>`}).join("")}</tr>`).join("")}</tbody></table></div>`
-  :`<div class="wrap"><table><thead><tr><th rowspan="2">Hora</th><th rowspan="2">Cielo</th><th class="grp" colspan="${act.length}">Temperatura</th><th class="grp" colspan="${act.length}">Lluvia (mm · prob.)</th></tr><tr>${th(act)}${th(act)}</tr></thead><tbody>${d.ix.map(i=>`<tr${D.times[i].slice(0,13)===nowK?' class="now"':""}><td>${D.times[i].slice(11,16)}</td><td>${ic(sky(D,i))}</td>${act.map(s=>`<td>${T(gs(D,s.id).t[i])}</td>`).join("")}${act.map(s=>{const S=gs(D,s.id),pp=S.pp?.[i];return`<td>${R(S.p[i])}${pp!=null?' <span class="mut">· '+Math.round(pp)+' %</span>':""}</td>`}).join("")}</tr>`).join("")}</tbody></table></div>`;
- return sel+`<h2>Resumen</h2>${sum}${rs}<h2>Temperatura hora a hora</h2>${chart(D,d,act)}<h2>Tabla horaria</h2>${hrs}<h2>Lluvia hora a hora</h2>${rainChart(D,d,act)}`;
+  ?`<p class="mut tiny">Cada celda: temperatura y, debajo, lluvia (mm · probabilidad).</p><div class="wrap"><table class="compact"><thead><tr><th>Hora</th>${actH.map(s=>`<th><span class="dot" style="background:var(${s.c})"></span>${sn(s)}</th>`).join("")}</tr></thead><tbody>${d.ix.map(i=>`<tr${D.times[i].slice(0,13)===nowK?' class="now"':""}><td>${D.times[i].slice(11,16)} ${ic(sky(D,i))}</td>${actH.map(s=>{const S=gs(D,s.id),pp=S.pp?.[i];return`<td><b>${T(S.t[i])}</b><span class="rain2">${R(S.p[i])}${pp!=null?" · "+Math.round(pp)+" %":""}</span></td>`}).join("")}</tr>`).join("")}</tbody></table></div>`
+  :`<div class="wrap"><table><thead><tr><th rowspan="2">Hora</th><th rowspan="2">Cielo</th><th class="grp" colspan="${actH.length}">Temperatura</th><th class="grp" colspan="${actH.length}">Lluvia (mm · prob.)</th></tr><tr>${th(actH)}${th(actH)}</tr></thead><tbody>${d.ix.map(i=>`<tr${D.times[i].slice(0,13)===nowK?' class="now"':""}><td>${D.times[i].slice(11,16)}</td><td>${ic(sky(D,i))}</td>${actH.map(s=>`<td>${T(gs(D,s.id).t[i])}</td>`).join("")}${actH.map(s=>{const S=gs(D,s.id),pp=S.pp?.[i];return`<td>${R(S.p[i])}${pp!=null?' <span class="mut">· '+Math.round(pp)+' %</span>':""}</td>`}).join("")}</tr>`).join("")}</tbody></table></div>`;
+ return sel+`<h2>Resumen</h2>${sum}${rs}<h2>Temperatura hora a hora</h2>${chart(D,d,act)}<h2>Lluvia hora a hora</h2>${rainChart(D,d,act)}<h2>Tabla horaria</h2>${hrs}`;
 }
 
 function vSem(D){
