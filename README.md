@@ -1,6 +1,7 @@
 # meteo
 
-Previsión meteorológica estática (sin dependencias ni build).
+Previsión meteorológica estática (sin dependencias ni build) que se puede
+instalar como app en el móvil.
 
 - Sitio: https://meteo.glosasdeguardia.es
 - GitHub Pages: https://josuantonsanz.github.io/meteo
@@ -9,20 +10,37 @@ Previsión meteorológica estática (sin dependencias ni build).
 
 | Archivo | Contenido |
 | --- | --- |
-| `index.html` | Estructura de la página |
-| `styles.css` | Estilos (claro/oscuro con `prefers-color-scheme`) |
-| `app.js` | Lógica: carga de datos, vistas (día/semana/detalle), gráficas |
-| `CNAME` | Dominio propio de GitHub Pages (`meteo.glosasdeguardia.es`) |
+| `index.html` | Estructura: cabecera fija, vistas, lugares, pie |
+| `styles.css` | Estilos (claro/oscuro con `prefers-color-scheme`, *safe areas*) |
+| `app.js` | Lógica: datos, vistas (día/semana/detalle) y gráficas |
+| `sw.js` | Service worker: caché de la app para abrirla sin conexión |
+| `manifest.webmanifest` | Manifiesto de instalación (nombre, iconos, colores) |
+| `icons/` | Iconos PNG/SVG; `icon.svg` es la fuente vectorial |
+| `favicon.ico` | Favicon 16/32/48 |
+| `CNAME` | Dominio propio de GitHub Pages |
 | `.nojekyll` | Evita que Pages procese el sitio con Jekyll |
+| `publicar.bat` | Envía los cambios a GitHub |
+| `todo.md` | Ideas y tareas pendientes |
 
-## Datos
+## Instalar en el móvil
+
+- **Android (Chrome)**: menú ⋮ → «Instalar aplicación» (o «Añadir a pantalla de
+  inicio»). Se abre a pantalla completa con el icono de la nube.
+- **iOS (Safari)**: botón Compartir → «Añadir a pantalla de inicio». El icono
+  lo toma de `icons/apple-touch-icon.png`.
+
+## Datos y caché
 
 - Open-Meteo (ECMWF, ICON, ensemble WeatherNext 2), CC BY 4.0
 - AEMET OpenData (API key en `app.js`; si caduca, hay que renovarla)
 - Nominatim (OpenStreetMap) para buscar lugares
 
-Las vistas se guardan en `localStorage` (`t.places`, `t.city`, `t.view`).
-Los datos se cachean 18 minutos (`t.cache2.<lugar>`).
+- Datos de previsión: `localStorage`, clave `t.cache2.<lugar>`, **30 minutos**
+  (`Date.now()-ca.t<18e5`). Pasado ese tiempo se vuelven a pedir; no hay
+  recarga automática mientras la página está abierta.
+- Estado (lugar, vista, día): `t.places`, `t.city`, `t.view`, sin caducidad.
+- Código (HTML/CSS/JS): el service worker pide primero a la red, así que un
+  `push` se ve en la siguiente visita. Sin conexión, sirve su copia.
 
 ## Publicar
 
@@ -35,3 +53,6 @@ A mano:
 ```bash
 git add -A && git commit -m "cambio" && git push origin main
 ```
+
+Si cambias la lista de archivos del `sw.js`, sube el número de `CACHE`
+(`meteo-v2` → `meteo-v3`) para que se refresque la copia guardada.

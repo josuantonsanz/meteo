@@ -2,17 +2,33 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Previsión meteorológica</title>
+<meta name="description" content="Previsión por horas comparando AEMET, ECMWF, ICON y WeatherNext 2.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#f3f5f6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161c21" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Meteo">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="color-scheme" content="light dark">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<main>
+<header class="appbar">
+<div class="in">
 <h1>Previsión meteorológica</h1>
-<p class="sub">Comparación entre AEMET, ECMWF, ICON y WeatherNext 2.</p>
-<nav id="cities" aria-label="Localidad"></nav>
-<nav id="views" class="views" aria-label="Vista"></nav>
-<div id="out"></div>
+<p class="sub">AEMET, ECMWF, ICON y WeatherNext 2</p>
+<nav id="cities" class="chips" aria-label="Localidad"></nav>
+</div>
+</header>
+<nav id="views" class="tabs" aria-label="Vista"></nav>
+<main>
+<div id="out" aria-live="polite"></div>
 <details id="plc"><summary>Lugares</summary>
 <div id="plist"></div>
 <p><input id="q" type="search" placeholder="Buscar un lugar (pueblo, ciudad, colegio…)" aria-label="Buscar un lugar"> <button id="find">Buscar</button> <button id="reset">Restaurar lugares iniciales</button></p>

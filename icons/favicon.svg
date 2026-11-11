@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" role="img" aria-label="Meteo">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0.25" y2="1">
+      <stop offset="0" stop-color="#4285ab"/>
+      <stop offset="0.55" stop-color="#2c5a78"/>
+      <stop offset="1" stop-color="#1b3547"/>
+    </linearGradient>
+    <path id="drop" d="M0 0c-13 17-20 27-20 36a20 20 0 0 0 40 0c0-9-7-19-20-36z"/>
+  </defs>
+  <rect width="512" height="512" fill="url(#sky)"/>
+  <g fill="#ffffff">
+    <circle cx="190" cy="214" r="54"/>
+    <circle cx="282" cy="200" r="66"/>
+    <circle cx="342" cy="236" r="44"/>
+    <rect x="136" y="238" width="250" height="50" rx="25"/>
+  </g>
+  <g fill="#a9d5ee">
+    <use href="#drop" x="198" y="312"/>
+    <use href="#drop" x="256" y="328"/>
+    <use href="#drop" x="314" y="312"/>
+  </g>
+</svg>
