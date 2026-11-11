@@ -37,7 +37,11 @@ instalar como app en el móvil.
 
 - Datos de previsión: `localStorage`, clave `t.cache2.<lugar>`, **30 minutos**
   (`Date.now()-ca.t<18e5`). Pasado ese tiempo se vuelven a pedir; no hay
-  recarga automática mientras la página está abierta.
+  recarga automática mientras la página está abierta. Para forzar la
+  actualización, el **botón de actualizar de la cabecera** borra la caché de
+  datos y vuelve a pedirlos.
+- El «tirar para recargar» del móvil está desactivado (`overscroll-behavior`)
+  para que la barra inferior no se mueva al llegar arriba del todo.
 - Estado (lugar, vista, día): `t.places`, `t.city`, `t.view`, sin caducidad.
 - Código (HTML/CSS/JS): el service worker pide primero a la red, así que un
   `push` se ve en la siguiente visita. Sin conexión, sirve su copia.

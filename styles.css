@@ -1,12 +1,19 @@
 :root{--bg:#f3f5f6;--card:#fff;--ink:#1d2a33;--mut:#66747e;--rule:#d8dfe3;--acc:#2c5a78;--c0:#2c5a78;--c1:#3d7a5a;--c2:#b07d1e;--c3:#7a5a96;--bar:rgba(243,245,246,.82);--shadow:0 1px 2px rgba(20,30,38,.06);color-scheme:light}
 @media(prefers-color-scheme:dark){:root{--bg:#161c21;--card:#1e262c;--ink:#e6ecef;--mut:#92a1ab;--rule:#34414a;--acc:#8fbbd6;--c0:#7fb2d6;--c1:#7cc09b;--c2:#dcad55;--c3:#b99ad4;--bar:rgba(22,28,33,.82);--shadow:0 1px 2px rgba(0,0,0,.4);color-scheme:dark}}
 *{box-sizing:border-box}
-html{-webkit-text-size-adjust:100%}
+html{-webkit-text-size-adjust:100%;overscroll-behavior-y:contain}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif;overscroll-behavior-y:contain}
 
 /* ---------- barra superior tipo app ---------- */
 .appbar{position:sticky;top:0;z-index:20;background:var(--bar);-webkit-backdrop-filter:blur(16px) saturate(1.6);backdrop-filter:blur(16px) saturate(1.6);border-bottom:1px solid var(--rule);padding:calc(6px + env(safe-area-inset-top)) 0 6px}
 .appbar .in{max-width:980px;margin:0 auto;padding:0 14px}
+.appbar .top{display:flex;align-items:center;gap:10px}
+.appbar .top h1{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.iconbtn{flex:0 0 auto;margin-left:auto;width:40px;height:40px;display:grid;place-items:center;color:var(--ink);background:var(--card);border:1px solid var(--rule);border-radius:10px;cursor:pointer}
+.iconbtn svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.iconbtn:active{background:color-mix(in srgb,var(--acc) 14%,var(--card))}
+.iconbtn.girando svg{animation:giro .9s linear infinite}
+@keyframes giro{to{transform:rotate(360deg)}}
 h1,h2{font-family:Charter,"Iowan Old Style",Georgia,serif;font-weight:600;margin:0}
 h1{font-size:1.28rem;line-height:1.25}
 .appbar .sub{color:var(--mut);font-size:.78rem;margin:0 0 6px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
