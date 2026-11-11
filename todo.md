@@ -33,6 +33,8 @@
 - [ ] Lighthouse: confirmar que sale como instalable y que no hay avisos.
 - [ ] ¿Cachear también la vista Detalle? Hoy avisa de que necesita conexión
       (`detCache` solo vive en memoria).
+- [x] Globo con el dato exacto al tocar o pasar por encima de las gráficas
+      (temperatura y lluvia), con línea guía en la hora elegida.
 - [ ] Repasar contraste de las fuentes tenues de las gráficas en modo oscuro.
 - [ ] Si apetece, capturas (`screenshots` en el manifiesto) para que el
       instalador de Android muestre una vista previa más rica.

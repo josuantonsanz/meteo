@@ -101,6 +101,38 @@ const sky=(D,i)=>wk(D.s.icon_seamless?.c?.[i]??D.s.ecmwf_ifs025?.c?.[i]);
 const th=(a,extra="")=>a.map(s=>`<th><span class="dot" style="background:var(${s.c})"></span>${s.n}</th>`).join("")+extra;
 const range=(a)=>{a=a.filter(v=>v!=null);return a.length?[Math.min(...a),Math.max(...a)]:[null,null]};
 
+/* --- globos con el dato exacto al tocar o pasar por encima --- */
+const TIPS={};let TIPN=0,TIP_FIJO=null;
+function chartBox(svg,tips,geo){const id="t"+(++TIPN);TIPS[id]={tips,geo};return `<div class="chartbox" data-tip="${id}">${svg}<div class="tip" hidden></div></div>`}
+function pintarTip(box,i,ev){
+ const T=TIPS[box.dataset.tip];if(!T)return;const p=T.tips[i];if(!p)return;
+ const svg=box.querySelector("svg"),tip=box.querySelector(".tip"),gu=svg.querySelector(".guide");
+ const r=svg.getBoundingClientRect();
+ if(gu){gu.setAttribute("x1",T.geo.xs[i]);gu.setAttribute("x2",T.geo.xs[i]);gu.style.visibility="visible"}
+ tip.innerHTML=`<b>${p.h}</b>`+p.rows.map(x=>`<span class="tr"><i style="background:var(${x.c})"></i>${x.n}<em>${x.v}</em></span>`).join("");
+ tip.hidden=false;
+ const esc=r.width/T.geo.W,an=tip.offsetWidth,al=tip.offsetHeight,x0=T.geo.xs[i]*esc;
+ tip.style.left=Math.max(an/2+1,Math.min(r.width-an/2-1,x0))+"px";
+ const ref=ev&&ev.clientY?ev.clientY-r.top:r.height/3;
+ tip.style.top=Math.max(al+6,Math.min(r.height-4,ref-10))+"px";
+}
+function ocultarTip(box){
+ if(!box)return;const t=box.querySelector(".tip"),g=box.querySelector("svg .guide");
+ if(t)t.hidden=true;if(g)g.style.visibility="hidden";if(TIP_FIJO===box)TIP_FIJO=null;
+}
+function wiringTips(){
+ document.querySelectorAll(".chartbox").forEach(box=>{
+  const T=TIPS[box.dataset.tip];if(!T)return;
+  const svg=box.querySelector("svg");
+  const idx=ev=>{const r=svg.getBoundingClientRect(),u=(ev.clientX-r.left)*(T.geo.W/r.width);let bi=0,bd=1e9;
+   T.geo.xs.forEach((v,k)=>{const d=Math.abs(v-u);if(d<bd){bd=d;bi=k}});return bi};
+  box.onpointerdown=ev=>{TIP_FIJO=box;pintarTip(box,idx(ev),ev)};
+  box.onpointermove=ev=>{if(ev.pointerType==="mouse"||ev.buttons)pintarTip(box,idx(ev),ev)};
+  box.onpointerleave=()=>{if(TIP_FIJO!==box)ocultarTip(box)};
+ });
+}
+document.addEventListener("pointerdown",e=>{if(!e.target.closest(".chartbox"))document.querySelectorAll(".chartbox").forEach(b=>ocultarTip(b))});
+
 function chart(D,d,act){
  const W=narrow()?392:720,H=narrow()?210:230,L=narrow()?30:36,Rr=10,Tp=10,B=24,ix=d.ix,vals=[];
  act.forEach(s=>{const S=gs(D,s.id);ix.forEach(i=>{vals.push(S.t[i]);if(s.id==="wn"){vals.push(S.lo[i],S.hi[i])}})});
@@ -118,7 +150,11 @@ function chart(D,d,act){
   if(p)g+=`<path d="${p}" fill="none" stroke-width="1.4" stroke-linejoin="round" style="stroke:var(${s.c});opacity:.45"/>`});
  const tM=ix.map(i=>avg(act.map(s=>gs(D,s.id).t[i]))),pM=mpath(tM,x,y);
  if(pM)g+=`<path d="${pM}" fill="none" stroke-width="2.4" stroke-linejoin="round" style="stroke:var(--ink)"/>`;
- return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperatura por horas">${g}</svg><div class="leg"><span><span class="dot" style="background:var(--ink)"></span>Media de las fuentes</span>${act.map(s=>`<span><span class="dot" style="background:var(${s.c});opacity:.55"></span>${s.n}${s.id==="wn"?" (banda: 80 % de los escenarios)":""}</span>`).join("")}</div>`;
+ g+=`<line class="guide" x1="0" x2="0" y1="${Tp}" y2="${H-B}" style="stroke:var(--acc);stroke-width:1.5;stroke-dasharray:4 3;visibility:hidden"/>`;
+ const tips=ix.map((i,k)=>({h:D.times[i].slice(11,16),rows:[{c:"--ink",n:"Media",v:T(tM[k])}]
+  .concat(act.map(s=>({c:s.c,n:sn(s),v:T(gs(D,s.id).t[i])})).filter(r=>r.v!=="–"))}));
+ const svg=chartBox(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperatura por horas">${g}</svg>`,tips,{W,xs:ix.map((_,k)=>x(k))});
+ return svg+`<div class="leg"><span><span class="dot" style="background:var(--ink)"></span>Media de las fuentes</span>${act.map(s=>`<span><span class="dot" style="background:var(${s.c});opacity:.55"></span>${s.n}${s.id==="wn"?" (banda: 80 % de los escenarios)":""}</span>`).join("")}</div>`;
 }
 
 const avg=a=>{a=a.filter(v=>v!=null);return a.length?a.reduce((x,y)=>x+y,0)/a.length:null};
@@ -154,8 +190,11 @@ function rainChart(D,d,act){
   if(p)g+=`<path d="${p}" fill="none" stroke-width="1.2" stroke-linejoin="round" style="stroke:var(${s.c});opacity:.38"/>`});
  const pm=mpath(ppM,x,yP);
  if(pm)g+=`<path d="${pm}" fill="none" stroke-width="2.8" stroke-linejoin="round" style="stroke:var(--ink)"/>`;
+ const tips=ix.map((i,k)=>({h:D.times[i].slice(11,16),rows:[{c:"--ink",n:"Media",v:`${ppM[k]!=null?Math.round(ppM[k])+" %":"–"} · ${mmM[k]!=null?R(mmM[k])+" mm":"–"}`}]
+  .concat([...new Set([...ppS,...mmS])].map(s=>{const pp=(gs(D,s.id).pp||[])[i],p=gs(D,s.id).p[i];
+   return {c:s.c,n:sn(s),v:`${pp!=null?Math.round(pp)+" %":"–"} · ${p!=null?R(p)+" mm":"–"}`}}))}));
  const lg=`<span><span class="dot" style="background:var(--ink)"></span>Media: probabilidad</span><span><span class="dot" style="background:var(--acc);opacity:.6"></span>Media: agua (barras)</span>`+ppS.map(s=>`<span><span class="dot" style="background:var(${s.c});opacity:.55"></span>${s.n}</span>`).join("");
- return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Probabilidad y cantidad de lluvia por horas">${g}</svg><div class="leg">${lg}</div>`;
+ return chartBox(`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Probabilidad y cantidad de lluvia por horas">${g}<line class="guide" x1="0" x2="0" y1="${PT}" y2="${PB0+PBH}" style="stroke:var(--acc);stroke-width:1.5;stroke-dasharray:4 3;visibility:hidden"/></svg>`,tips,{W,xs:ix.map((_,k)=>x(k))})+`<div class="leg">${lg}</div>`;
 }
 
 function vDia(D){
@@ -215,6 +254,7 @@ async function find(){
  catch(e){$("pres").innerHTML='<p class="msg err">La búsqueda de lugares no está disponible ahora.</p>'}
 }
 async function render(){
+ for(const k in TIPS)delete TIPS[k];TIPN=0;TIP_FIJO=null;
  renderPlaces();
  $("cities").innerHTML=CITIES.map((c,i)=>`<button data-c="${i}" aria-pressed="${i===st.city}">${c.n}</button>`).join("");
  $("views").innerHTML=VIEWS.map(([v,n,s])=>`<button data-v="${v}" aria-pressed="${v===st.view}" aria-label="${n}">${VI[v]}<span>${s}</span></button>`).join("");
@@ -223,6 +263,7 @@ async function render(){
   const D=await load(c);if(c!==CITIES[st.city])return;
   $("notes").innerHTML=D.notes.map(n=>`<span class="err">${n}</span>`).join("<br>")+(c.aen?`<span class="mut">AEMET usa el municipio de ${c.aen}.</span>`:"");
   out.innerHTML=st.view==="dia"?vDia(D):st.view==="sem"?vSem(D):await vDet(c);
+  wiringTips();
   const ds=$("dsel");if(ds)ds.onchange=()=>{st.day=+ds.value;render()};
   const ms=$("msel");if(ms)ms.onchange=()=>{st.model=ms.value;render()};
  }catch(e){out.innerHTML=`<p class="msg err">${e.message}</p>`}
