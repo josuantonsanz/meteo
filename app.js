@@ -108,12 +108,14 @@ function chart(D,d,act){
   if(up.length)g+=`<polygon points="${up.concat(dn).join(" ")}" style="fill:var(--c3);opacity:.16"/>`}
  act.forEach(s=>{const S=gs(D,s.id);let p="",on=false;
   ix.forEach((i,k)=>{const v=S.t[i];if(v==null){on=false;return}p+=(on?"L":"M")+x(k).toFixed(1)+","+y(v).toFixed(1);on=true});
-  if(p)g+=`<path d="${p}" fill="none" stroke-width="2" stroke-linejoin="round" style="stroke:var(${s.c})"/>`});
- return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperatura por horas">${g}</svg><div class="leg">${act.map(s=>`<span><span class="dot" style="background:var(${s.c})"></span>${s.n}${s.id==="wn"?" (banda: 80 % de los escenarios)":""}</span>`).join("")}</div>`;
+  if(p)g+=`<path d="${p}" fill="none" stroke-width="1.4" stroke-linejoin="round" style="stroke:var(${s.c});opacity:.45"/>`});
+ const tM=ix.map(i=>avg(act.map(s=>gs(D,s.id).t[i]))),pM=mpath(tM,x,y);
+ if(pM)g+=`<path d="${pM}" fill="none" stroke-width="2.4" stroke-linejoin="round" style="stroke:var(--ink)"/>`;
+ return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Temperatura por horas">${g}</svg><div class="leg"><span><span class="dot" style="background:var(--ink)"></span>Media de las fuentes</span>${act.map(s=>`<span><span class="dot" style="background:var(${s.c});opacity:.55"></span>${s.n}${s.id==="wn"?" (banda: 80 % de los escenarios)":""}</span>`).join("")}</div>`;
 }
 
 const avg=a=>{a=a.filter(v=>v!=null);return a.length?a.reduce((x,y)=>x+y,0)/a.length:null};
-const nstep=v=>{const c=[.1,.2,.5,1,2,5,10,20,50];return c.find(x=>x>=v)||100};
+const nstep=v=>{const c=[.05,.1,.2,.25,.5,1,2,5,10,20,50];return c.find(x=>x>=v)||100};
 const mpath=(vals,px,py)=>{let p="",on=false;
  vals.forEach((v,k)=>{if(v==null){on=false;return}p+=(on?"L":"M")+px(k).toFixed(1)+","+py(v).toFixed(1);on=true});return p};
 const mmTxt=v=>v<10?(Math.round(v*10)%10?v.toFixed(1):String(Math.round(v))):String(Math.round(v));
@@ -125,8 +127,8 @@ function rainChart(D,d,act){
  if(!ppS.length&&!mmS.length)return"";
  const ppM=ix.map(i=>avg(ppS.map(s=>(gs(D,s.id).pp||[])[i])));
  const mmM=ix.map(i=>avg(mmS.map(s=>gs(D,s.id).p[i])));
- const mx=Math.max(0,...mmM.filter(v=>v!=null),...mmS.flatMap(s=>gs(D,s.id).p).filter(v=>v!=null));
- const step=nstep(mx>0?mx/3:1),top=Math.max(step,Math.ceil((mx*1.05||step)/step)*step);
+ const mx=Math.max(0,...mmM.filter(v=>v!=null));
+ const step=nstep(mx>0?mx/3:1),top=Math.max(step,Math.ceil((mx*1.08||step)/step)*step);
  const W=720,L=42,Rr=12,PT=22,PH=88,MB=PT+PH+38,PB0=MB+10,PBH=92,H=PB0+PBH+24;
  const x=k=>L+(W-L-Rr)*k/(ix.length-1),span=(W-L-Rr)/(ix.length-1);
  const yP=v=>PT+PH*(1-v/100),yM=v=>PB0+PBH*(1-v/top);
@@ -139,14 +141,12 @@ function rainChart(D,d,act){
  g+=`<text x="${L}" y="${MB}" font-size="11" style="fill:var(--mut)">Agua prevista, mm</text>`;
  const bw=Math.max(3,Math.min(16,span*.55));
  mmM.forEach((v,k)=>{if(v==null||v<=0)return;const hh=Math.max(2,PB0+PBH-yM(v));
-  g+=`<rect x="${(x(k)-bw/2).toFixed(1)}" y="${(PB0+PBH-hh).toFixed(1)}" width="${bw.toFixed(2)}" height="${hh.toFixed(1)}" rx="1.5" style="fill:var(--acc);opacity:.45"/>`});
- mmS.forEach(s=>{const p=mpath(ix.map(i=>gs(D,s.id).p[i]),x,yM);
-  if(p)g+=`<path d="${p}" fill="none" stroke-width="1.2" stroke-linejoin="round" style="stroke:var(${s.c});opacity:.8"/>`});
+  g+=`<rect x="${(x(k)-bw/2).toFixed(1)}" y="${(PB0+PBH-hh).toFixed(1)}" width="${bw.toFixed(2)}" height="${hh.toFixed(1)}" rx="1.5" style="fill:var(--acc);opacity:.5"/>`});
  ppS.forEach(s=>{const p=mpath(ix.map(i=>(gs(D,s.id).pp||[])[i]),x,yP);
-  if(p)g+=`<path d="${p}" fill="none" stroke-width="1.2" stroke-linejoin="round" style="stroke:var(${s.c});opacity:.8"/>`});
+  if(p)g+=`<path d="${p}" fill="none" stroke-width="1.2" stroke-linejoin="round" style="stroke:var(${s.c});opacity:.38"/>`});
  const pm=mpath(ppM,x,yP);
- if(pm)g+=`<path d="${pm}" fill="none" stroke-width="2.2" stroke-linejoin="round" style="stroke:var(--ink)"/>`;
- const lg=`<span><span class="dot" style="background:var(--ink)"></span>Media: probabilidad</span><span><span class="dot" style="background:var(--acc);opacity:.6"></span>Media: agua (barras)</span>`+act.map(s=>`<span><span class="dot" style="background:var(${s.c})"></span>${s.n}</span>`).join("");
+ if(pm)g+=`<path d="${pm}" fill="none" stroke-width="2.8" stroke-linejoin="round" style="stroke:var(--ink)"/>`;
+ const lg=`<span><span class="dot" style="background:var(--ink)"></span>Media: probabilidad</span><span><span class="dot" style="background:var(--acc);opacity:.6"></span>Media: agua (barras)</span>`+ppS.map(s=>`<span><span class="dot" style="background:var(${s.c});opacity:.55"></span>${s.n}</span>`).join("");
  return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Probabilidad y cantidad de lluvia por horas">${g}</svg><div class="leg">${lg}</div>`;
 }
 
