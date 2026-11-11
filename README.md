@@ -26,4 +26,12 @@ Los datos se cachean 18 minutos (`t.cache2.<lugar>`).
 
 ## Publicar
 
-`git push` a `main` y GitHub Pages reconstruye el sitio (~1 min).
+Doble clic en `publicar.bat` (o `publicar.bat "mensaje del cambio"`): hace
+`git add -A`, confirma con mensaje y envía a `origin/main`. GitHub Pages
+reconstruye el sitio en ~1 minuto.
+
+A mano:
+
+```bash
+git add -A && git commit -m "cambio" && git push origin main
+```
